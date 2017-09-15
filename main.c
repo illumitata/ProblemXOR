@@ -259,18 +259,20 @@ int main(){
   char esc;
   double x1, x2;
 
-  printf("\n---Proces nauki zakończony---\n");
+  printf("\n\033[01;36m---Proces nauki zakończony---\033[01;37m\n\n");
 
   while(1){
 
     printf("Chcesz zakończyć działanie? (y | n) : ");
     scanf("%c", &esc);
-    if(esc=='y') break;
-
+    if(esc=='y'){
+      printf("\n\033[01;36m---Zamknięcie programu---\x1b[0m\n");
+      break;
+    }
     printf("\nPodaj pierwszy składnik: ");
     scanf("%lf", &x1);
     neuronInput[0].wage = x1;
-    printf("\nPodaj drugi składnik: ");
+    printf("\nPodaj drugi składnik:    ");
     scanf("%lf", &x2);
     neuronInput[1].wage = x2;
 
@@ -279,7 +281,7 @@ int main(){
     calculateNeuron(link, neuronHidden, 1);
     calculateNeuron(link, neuronOutput, 0);
 
-    printf("|||||| Wynik sieci: %lf\n\n", neuronOutput[0].wage);
+    printf("\n|||||| Wynik sieci:    \033[01;35m%lf\033[01;37m\n\n", neuronOutput[0].wage);
 
     getchar();
 
