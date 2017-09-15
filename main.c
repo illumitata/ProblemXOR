@@ -1,24 +1,35 @@
+/*
+  implementacja algorytmu wstecznej propagacji
+        oraz zastosowanie w rozwiązaniu
+        problemu alternatywy rozłącznej
+    --------------------------------------
+    |||| Jan Iwaszkiewicz @illumitata ||||
+    --------------------------------------
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
 
-#define EXAMPLES   4 //liczba przykładów podanych sieci
-#define NUM_INPUT  2 //liczba wejść
-#define NUM_HIDDEN 2 //liczba ukrytych neuronów
-#define NUM_OUTPUT 1 //liczba wyjść z sieci
-#define NUM_BIAS   3 //liczba "biasów"
-#define NUM_LINK   9 //liczba połączeń w sieci
-#define ALPHA    0.1 //współczynnik nauki sieci
+#define EXAMPLES       4   //liczba przykładów podanych sieci
+#define NUM_INPUT      2   //liczba wejść
+#define NUM_HIDDEN     2   //liczba ukrytych neuronów
+#define NUM_OUTPUT     1   //liczba wyjść z sieci
+#define NUM_BIAS       3   //liczba "biasów"
+#define NUM_LINK       9   //liczba połączeń w sieci
+#define ALPHA        0.1   //współczynnik nauki sieci
+#define BIAS        -1.0   //wartość bias
+#define ITERATION 250000   //ilość iteracji podczas nauki
 
-struct Vector{    //struktura wektora uczącego
-  double first;   //pierwszy składnik
-  double second;  //drugi składnik
-  double result;  //wynik operacji XOR
+struct Vector{          //struktura wektora uczącego
+  double first;         //pierwszy składnik
+  double second;        //drugi składnik
+  double result;        //wynik operacji XOR
 };
 
-struct Neuron{    //struktura pojedyńczego neuronu sieci
-  double wage;    //waga na wyjściu z neuronu
+struct Neuron{          //struktura pojedyńczego neuronu sieci
+  double wage;          //waga na wyjściu z neuronu
   double smallDelta;    //mała delta do obliczeń błędu
 };
 
@@ -49,6 +60,48 @@ double funcSigDerivative(double s){
   return funcDer;
 }
 
+//obliczanie danego neuronu
+void calculateNeuron(struct Link *link[], struct Neuron neuronPicked[], int k){
+
+  double tmpWage = 0.0;
+
+  for(int i=0; i<NUM_LINK; i++){
+    if(link[i]->to == &(neuronPicked[k])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
+  }
+
+  neuronPicked[k].wage = funcSig(tmpWage);
+
+  return;
+}
+
+void calculateOutputError(double error, struct Neuron neuronPicked[], int k){
+
+  neuronPicked[k].smallDelta = error * funcSigDerivative(neuronPicked[k].wage);
+
+  return;
+}
+
+void calculateHiddenError(struct Link *link[], struct Neuron neuronPicked[], int k){
+
+  for(int i=0; i<NUM_LINK; i++){
+    if(link[i]->from == &(neuronPicked[k])){
+      neuronPicked[k].smallDelta = link[i]->wage * link[i]->to->smallDelta \
+                                   * funcSigDerivative(neuronPicked[k].wage);
+    }
+  }
+
+  return;
+}
+
+void backPropagation(struct Link *link[]){
+
+  for(int i=0; i<NUM_LINK; i++){
+    link[i]->bigDelta = ALPHA * (link[i]->from->wage) * (link[i]->to->smallDelta);
+    link[i]->wage += link[i]->bigDelta;
+  }
+
+  return;
+}
 
 int main(){
 
@@ -82,7 +135,7 @@ int main(){
 
   //stworzenie neuronów biasowych i zainicjowanie wagi -1.0
   struct Neuron neuronBias[NUM_BIAS];
-  for(int i=0; i<NUM_BIAS; i++) neuronBias[i].wage = -1.0;
+  for(int i=0; i<NUM_BIAS; i++) neuronBias[i].wage = BIAS;
 
   //stworzenie połączeń pomiędzy neuronami
   struct Link *link[NUM_LINK];
@@ -129,161 +182,91 @@ int main(){
   link[8]->from = &(neuronBias[2]);
   link[8]->to   = &(neuronOutput[0]);
 
-///////////Proces Nauki///////////////////
+///////////Proces Nauki///////////
 
-double tmpWage = 0.0;
-double tmpError = 0.0;
-double networkError = 0.0;
-int       randomizeTab[4] = {0,0,0,0}; //tablica przechowująca wynik losowego wybrania wektoru uczącego
-int flag = 0;
-
-int num = 0;
-int x = 0;
+  double networkError = 0.0;
+  int    randomizeTab[4] = {0,0,0,0}; //tablica przechowująca wynik losowego wybrania wektoru uczącego
+  int    flag = 0;
+  int    num  = 0;
 
   srand(time(NULL));
 
-while(x<1000000){
-  //podanie sieci przykładu
+  for(int x=0; x<(ITERATION * EXAMPLES); x++){    //ilość iteracji razy ilość przykładów uczących
 
-    if((x%4)==0){
-//      printf("\n\n");
-      for(int i=0; i<4; i++) randomizeTab[i] = 0;
-    }
-
-    do{
-      num = rand()%4;
-
-      if(x%4==0){                           //jeżeli epoka jest wielokrotnością ilości wektorów to wstawia
-        flag = 1;
-        randomizeTab[x%4] = num;
+    //losowanie przykładu do sieci
+      if((x%4)==0){
+        for(int i=0; i<4; i++) randomizeTab[i] = 0;
       }
-      else{                                   //inaczej przegląda tablicę użytych i szuka niewykorzystanego
-        for(int i=0; i<(x%4);i++){
-          if(randomizeTab[i]==num){
-            flag = 0;
-            break;                            //jeżeli trafił na użyty wychodzi z pętli i losuje od nowa
-          }
-          else{
-            flag = 1;
-          }
+
+      do{
+        num = rand()%4;
+
+        if(x%4==0){                             //jeżeli epoka jest wielokrotnością ilości wektorów uczących to wstawia
+          flag = 1;
+          randomizeTab[x%4] = num;
         }
-        if(flag==1) randomizeTab[x%4] = num;
-      }
-    }while(flag!=1);
+        else{                                   //inaczej przegląda tablicę użytych i szuka niewykorzystanego
+          for(int i=0; i<(x%4);i++){
+            if(randomizeTab[i]==num){
+              flag = 0;
+              break;                            //jeżeli trafił na użyty wychodzi z pętli i losuje od nowa
+            }
+            else{
+              flag = 1;
+            }
+          }
+          if(flag==1) randomizeTab[x%4] = num;
+        }
+      }while(flag!=1);
+
+    //podanie sieci przykładu
+    neuronInput[0].wage = vector[num].first;
+    neuronInput[1].wage = vector[num].second;
 
 
-  neuronInput[0].wage = vector[num].first;
-  neuronInput[1].wage = vector[num].second;
+    //obliczenia dla neuronów
+    calculateNeuron(link, neuronHidden, 0);
+    calculateNeuron(link, neuronHidden, 1);
+    calculateNeuron(link, neuronOutput, 0);
 
+    //obliczenie błędu wyjścia z sieci
+    networkError = vector[num].result - neuronOutput[0].wage;
 
-  //obliczenia dla neuronów
-  tmpWage = 0.0;
-  for(int i=0; i<NUM_LINK; i++){
-    if(link[i]->to == &(neuronHidden[0])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-  }
-//  printf("Tmp: %lf\n", tmpWage);
+    /*
+        //Funkcje pomagające w obserwacji działania sieci
+        printf("-----ITERACJA %d num: %d------NETWORK ERROR: %lf\n", x, num, networkError);
+        printf("A: %lf B: %lf C:%lf\n", neuronInput[0].wage, neuronInput[1].wage, vector[num].result);
+        printf("Output 0: %lf\n", neuronOutput[0].wage);
+    */
 
-  neuronHidden[0].wage = funcSig(tmpWage);
-//  printf("Hidden 0: %lf\n", neuronHidden[0].wage);
-  tmpWage = 0.0;
+    //sprawdzić czy błąd jest mniejszy niż oczekiwany;
+    if(networkError<0.0003 && networkError>0.0) break;
 
-  for(int i=0; i<NUM_LINK; i++){
-    if(link[i]->to == &(neuronHidden[1])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-  }
-//  printf("Tmp: %lf\n", tmpWage);
+    //obliczenie błędu dla warstwy wyjściowej oraz ukrytej
+    calculateOutputError(networkError, neuronOutput, 0);
 
-  neuronHidden[1].wage = funcSig(tmpWage);
-//  printf("Hidden 1: %lf\n", neuronHidden[1].wage);
-  tmpWage = 0.0;
+    calculateHiddenError(link, neuronHidden, 0);
+    calculateHiddenError(link, neuronHidden, 1);
 
-  for(int i=0; i<NUM_LINK; i++){
-    if(link[i]->to == &(neuronOutput[0])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-  }
-//  printf("Tmp: %lf\n", tmpWage);
+    //propagowanie błędu czyli poprawa wartości połączeń
+    backPropagation(link);
 
-  neuronOutput[0].wage = funcSig(tmpWage);
-  tmpWage = 0.0;
-
-  //obliczenie błędu wyjścia z sieci
-  networkError = vector[num].result - neuronOutput[0].wage;
-//  printf("-----ITERACJA %d num: %d------NETWORK ERROR: %lf\n", x, num, networkError);
-//    printf("A: %lf B: %lf C:%lf\n", neuronInput[0].wage, neuronInput[1].wage, vector[num].result);
-//      printf("Output 0: %lf\n", neuronOutput[0].wage);
-
-  //sprawdzić czy błąd jest mniejszy niż oczekiwany;
-  if(networkError<0.0003 && networkError>0.0) break;
-
-  //obliczenie błędu dla warstwy wyjściowej
-  neuronOutput[0].smallDelta = networkError * funcSigDerivative(neuronOutput[0].wage);
-//  printf("error on output: %lf\n", neuronOutput[0].smallDelta);
-  tmpError = 0.0;
-
-  //oraz ukrytej
-  neuronHidden[0].smallDelta = link[4]->wage * neuronOutput[0].smallDelta * funcSigDerivative(neuronHidden[0].wage);
-//  printf("error on hidden 0: %lf\n", neuronHidden[0].smallDelta);
-  tmpError = 0.0;
-
-  neuronHidden[1].smallDelta = link[5]->wage * neuronOutput[0].smallDelta * funcSigDerivative(neuronHidden[1].wage);
-//  printf("error on hidden 1: %lf\n", neuronHidden[1].smallDelta);
-  tmpError = 0.0;
-
-  //propagowanie błędu czyli poprawa wartości połączeń
-
-  for(int i=0; i<NUM_LINK; i++){
-    link[i]->bigDelta = ALPHA * (link[i]->from->wage) * (link[i]->to->smallDelta);
-    link[i]->wage += link[i]->bigDelta;
-//    printf("link %d: %lf\n", i, link[i]->wage);
+    //powtarzamy dla innych wektorów
   }
 
-  //powtarzamy dla innych wektorów
-  x++;
-}
+///////////Sieć zamrożona, można sprawdzić działanie///////////
 
-/*wykres do pamięci
+  char esc;
+  double x1, x2;
 
-double wykresPunkty[EXAMPLES];
+  printf("\n---Proces nauki zakończony---\n");
 
-for(int num=0; num<EXAMPLES; num++){
-  neuronInput[0].wage = vector[num].first;
-  neuronInput[1].wage = vector[num].second;
-
-
-  //obliczenia dla neuronów
-  tmpWage = 0.0;
-  for(int i=0; i<NUM_LINK; i++){
-    if(link[i]->to == &(neuronHidden[0])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-  }
-  //  printf("Tmp: %lf\n", tmpWage);
-
-  neuronHidden[0].wage = funcSig(tmpWage);
-  //  printf("Hidden 0: %lf\n", neuronHidden[0].wage);
-  tmpWage = 0.0;
-
-  for(int i=0; i<NUM_LINK; i++){
-    if(link[i]->to == &(neuronHidden[1])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-  }
-  //  printf("Tmp: %lf\n", tmpWage);
-
-  neuronHidden[1].wage = funcSig(tmpWage);
-  //  printf("Hidden 1: %lf\n", neuronHidden[1].wage);
-  tmpWage = 0.0;
-
-  for(int i=0; i<NUM_LINK; i++){
-    if(link[i]->to == &(neuronOutput[0])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-  }
-  //  printf("Tmp: %lf\n", tmpWage);
-
-  neuronOutput[0].wage = funcSig(tmpWage);
-  tmpWage = 0.0;
-
-  wykresPunkty[num] = neuronOutput[0].wage;
-}*/
-
-  char done;
-
-  //sprawdzamy czy działa poprawnie
   while(1){
-    double x1, x2;
+
+    printf("Chcesz zakończyć działanie? (y | n) : ");
+    scanf("%c", &esc);
+    if(esc=='y') break;
+
     printf("\nPodaj pierwszy składnik: ");
     scanf("%lf", &x1);
     neuronInput[0].wage = x1;
@@ -292,79 +275,15 @@ for(int num=0; num<EXAMPLES; num++){
     neuronInput[1].wage = x2;
 
     //obliczenia dla neuronów
-    tmpWage = 0.0;
-    for(int i=0; i<NUM_LINK; i++){
-      if(link[i]->to == &(neuronHidden[0])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-    }
-
-    neuronHidden[0].wage = funcSig(tmpWage);
-    tmpWage = 0.0;
-
-    for(int i=0; i<NUM_LINK; i++){
-      if(link[i]->to == &(neuronHidden[1])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-    }
-
-    neuronHidden[1].wage = funcSig(tmpWage);
-    tmpWage = 0.0;
-
-    for(int i=0; i<NUM_LINK; i++){
-      if(link[i]->to == &(neuronOutput[0])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-    }
-
-    neuronOutput[0].wage = funcSig(tmpWage);
-    tmpWage = 0.0;
+    calculateNeuron(link, neuronHidden, 0);
+    calculateNeuron(link, neuronHidden, 1);
+    calculateNeuron(link, neuronOutput, 0);
 
     printf("|||||| Wynik sieci: %lf\n\n", neuronOutput[0].wage);
-    printf("\n\nChcesz zakończyć działanie? (y | n) : ");
-    scanf("%c", &done);
 
-    if(done=='y') break;
-  }
-/*rysowanie wykresu CHYBA ŹLE
+    getchar();
 
-if(neuronOutput[0].wage>wykresPunkty[1]-0.0003 && neuronOutput[0].wage<wykresPunkty[1]+0.0003){
-  printf("(1,0)          (1,1)\n\n\n          x         \n\n\n(0,0)          (0,1)\n");
-}
-else{
-  if(neuronOutput[0].wage>wykresPunkty[1]-0.0003 && neuronOutput[0].wage>wykresPunkty[0]){
-    printf("(1,0)          (1,1)\n              x     \n\n\n\n\n(0,0)          (0,1)\n");
   }
 
-  else printf("(1,0)          (1,1)\n\n\n\n\n    x               \n(0,0)          (0,1)\n");
-}*/
-
-/*
-  printf("\nPodaj pierwszy składnik: ");
-  scanf("%lf", &x1);
-  neuronInput[0].wage = x1;
-  printf("\nPodaj drugi składnik: ");
-  scanf("%lf", &x2);
-  neuronInput[1].wage = x2;
-
-  //obliczenia dla neuronów
-  tmpWage = 0.0;
-  for(int i=0; i<NUM_LINK; i++){
-    if(link[i]->to == &(neuronHidden[0])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-  }
-
-  neuronHidden[0].wage = funcSig(tmpWage);
-  tmpWage = 0.0;
-
-  for(int i=0; i<NUM_LINK; i++){
-    if(link[i]->to == &(neuronHidden[1])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-  }
-
-  neuronHidden[1].wage = funcSig(tmpWage);
-  tmpWage = 0.0;
-
-  for(int i=0; i<NUM_LINK; i++){
-    if(link[i]->to == &(neuronOutput[0])) tmpWage += (link[i]->from->wage) * (link[i]->wage);
-  }
-
-  neuronOutput[0].wage = funcSig(tmpWage);
-  tmpWage = 0.0;
-
-  printf("|||||| Wynik sieci: %lf\n\n", neuronOutput[0].wage);
-*/
   return 0;
 }
