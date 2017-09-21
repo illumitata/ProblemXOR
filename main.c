@@ -12,15 +12,15 @@
 #include <math.h>
 #include <time.h>
 
-#define EXAMPLES       4   //liczba przykładów podanych sieci
-#define NUM_INPUT      2   //liczba wejść
-#define NUM_HIDDEN     2   //liczba ukrytych neuronów
-#define NUM_OUTPUT     1   //liczba wyjść z sieci
-#define NUM_BIAS       3   //liczba "biasów"
-#define NUM_LINK       9   //liczba połączeń w sieci
-#define ALPHA        0.1   //współczynnik nauki sieci
-#define BIAS        -1.0   //wartość bias
-#define ITERATION 250000   //ilość iteracji podczas nauki
+#define EXAMPLES        4   //liczba przykładów podanych sieci
+#define NUM_INPUT       2   //liczba wejść
+#define NUM_HIDDEN      2   //liczba ukrytych neuronów
+#define NUM_OUTPUT      1   //liczba wyjść z sieci
+#define NUM_BIAS        3   //liczba "biasów"
+#define NUM_LINK        9   //liczba połączeń w sieci
+#define ALPHA         0.1   //współczynnik nauki sieci
+#define BIAS         -1.0   //wartość bias
+#define ITERATION  250000   //ilość iteracji podczas nauki
 
 struct Vector{          //struktura wektora uczącego
   double first;         //pierwszy składnik
@@ -185,7 +185,7 @@ int main(){
 ///////////Proces Nauki///////////
 
   double networkError = 0.0;
-  int    randomizeTab[4] = {0,0,0,0}; //tablica przechowująca wynik losowego wybrania wektoru uczącego
+  int    randomizeTab[EXAMPLES]; //tablica przechowująca wynik losowego wybrania wektoru uczącego
   int    flag = 0;
   int    num  = 0;
 
@@ -194,19 +194,19 @@ int main(){
   for(int x=0; x<(ITERATION * EXAMPLES); x++){    //ilość iteracji razy ilość przykładów uczących
 
     //losowanie przykładu do sieci
-      if((x%4)==0){
-        for(int i=0; i<4; i++) randomizeTab[i] = 0;
+      if((x%EXAMPLES)==0){
+        for(int i=0; i<EXAMPLES; i++) randomizeTab[i] = 0;
       }
 
       do{
-        num = rand()%4;
+        num = rand()%EXAMPLES;
 
-        if(x%4==0){                             //jeżeli epoka jest wielokrotnością ilości wektorów uczących to wstawia
+        if(x%EXAMPLES==0){                      //jeżeli epoka jest wielokrotnością ilości wektorów uczących to wstawia
           flag = 1;
-          randomizeTab[x%4] = num;
+          randomizeTab[x%EXAMPLES] = num;
         }
         else{                                   //inaczej przegląda tablicę użytych i szuka niewykorzystanego
-          for(int i=0; i<(x%4);i++){
+          for(int i=0; i<(x%EXAMPLES);i++){
             if(randomizeTab[i]==num){
               flag = 0;
               break;                            //jeżeli trafił na użyty wychodzi z pętli i losuje od nowa
@@ -215,7 +215,7 @@ int main(){
               flag = 1;
             }
           }
-          if(flag==1) randomizeTab[x%4] = num;
+          if(flag==1) randomizeTab[x%EXAMPLES] = num;
         }
       }while(flag!=1);
 
