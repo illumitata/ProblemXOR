@@ -103,6 +103,50 @@ void backPropagation(struct Link *link[]){
   return;
 }
 
+void connectLayers(struct Neuron neuronPickFirst[], struct Neuron neuronPickSecond[], \
+                   struct Link *link[], int lCount, int bCount, \
+                   int x, int y){
+
+  int i = lCount;
+
+
+  if(bCount == 0){
+      for(int j = 0; j < x; j++){
+        for(int k = 0; k < y; k++){
+                    printf("j: %d k: %d\n", j, k);
+          link[i]->wage = (((double)(rand()%100)) / ((double)(rand()%100)));
+          link[i]->from = &(neuronPickFirst[j]);
+          link[i]->to   = &(neuronPickSecond[k]);
+          i++;
+        }
+      }
+  }
+  else printf("ERROR\n");
+
+  return;
+}
+
+void connectBias(struct Neuron neuronPickFirst[], struct Neuron neuronPickSecond[], \
+                 struct Link *link[], int lCount, int bCount, \
+                 int x, int y){
+
+  int i = lCount;
+  int k = 0;
+  int j = bCount;
+
+  while(j < x && k < y){
+    printf("j: %d k: %d\n", j, k);
+    link[i]->wage = (((double)(rand()%100)) / ((double)(rand()%100)));
+    link[i]->from = &(neuronPickFirst[j]);
+    link[i]->to   = &(neuronPickSecond[k]);
+    i++;
+    j++;
+    k++;
+  }
+
+  return;
+}
+
 int main(){
 
   //inicjowanie przykładów czyli wektorów do nauki
@@ -141,7 +185,29 @@ int main(){
   struct Link *link[NUM_LINK];
   for(int i=0; i<NUM_LINK; i++) link[i] = calloc(1, sizeof(struct Link));
 
-  //pierwszy input do ukrytej
+  //liczniki tworzonych połączeń
+  int tmpLinkCount = 0;
+  int tmpBiasCount = 0;
+
+  connectLayers(neuronInput, neuronHidden, link, tmpLinkCount, tmpBiasCount, NUM_INPUT, NUM_HIDDEN);
+  tmpLinkCount += (NUM_INPUT * NUM_HIDDEN);
+  printf("%d %d \n", tmpLinkCount, tmpBiasCount);
+
+  connectLayers(neuronHidden, neuronOutput, link, tmpLinkCount, tmpBiasCount, NUM_HIDDEN, NUM_OUTPUT);
+  tmpLinkCount += (NUM_HIDDEN * NUM_OUTPUT);
+    printf("%d %d \n", tmpLinkCount, tmpBiasCount);
+
+  connectBias(neuronBias, neuronHidden, link, tmpLinkCount, tmpBiasCount, NUM_BIAS, NUM_HIDDEN);
+  tmpLinkCount += NUM_HIDDEN;
+  tmpBiasCount += NUM_HIDDEN;
+    printf("%d %d \n", tmpLinkCount, tmpBiasCount);
+
+  connectBias(neuronBias, neuronOutput, link, tmpLinkCount, tmpBiasCount, NUM_BIAS, NUM_OUTPUT);
+  tmpLinkCount += NUM_OUTPUT;
+  tmpBiasCount += NUM_OUTPUT;
+    printf("%d %d \n", tmpLinkCount, tmpBiasCount);
+
+/*  //pierwszy input do ukrytej
   link[0]->wage = 0.5;
   link[0]->from = &(neuronInput[0]);
   link[0]->to   = &(neuronHidden[0]);
@@ -181,7 +247,7 @@ int main(){
   link[8]->wage = 0.3;
   link[8]->from = &(neuronBias[2]);
   link[8]->to   = &(neuronOutput[0]);
-
+*/
 ///////////Proces Nauki///////////
 
   double networkError = 0.0;
@@ -223,11 +289,12 @@ int main(){
     neuronInput[0].wage = vector[num].first;
     neuronInput[1].wage = vector[num].second;
 
-
     //obliczenia dla neuronów
     calculateNeuron(link, neuronHidden, 0);
     calculateNeuron(link, neuronHidden, 1);
     calculateNeuron(link, neuronOutput, 0);
+
+
 
     //obliczenie błędu wyjścia z sieci
     networkError = vector[num].result - neuronOutput[0].wage;
