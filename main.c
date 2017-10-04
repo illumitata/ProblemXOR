@@ -20,7 +20,7 @@
 #define NUM_LINK         9   //liczba połączeń w sieci
 #define ALPHA          0.1   //współczynnik nauki sieci
 #define BIAS          -1.0   //wartość bias
-#define ITERATION   500000   //ilość iteracji podczas nauki
+#define ITERATION   300000   //ilość iteracji podczas nauki
 
 struct Vector{          //struktura wektora uczącego
   double first;         //pierwszy składnik
@@ -113,7 +113,7 @@ void connectLayers(struct Neuron neuronPickFirst[], struct Neuron neuronPickSeco
   if(bCount == 0){
       for(int j = 0; j < x; j++){
         for(int k = 0; k < y; k++){
-          link[i]->wage = (((double)(rand()%100)) / ((double)(rand()%100)));
+          link[i]->wage = (((double)(rand()%100)+0.1) / ((double)(rand()%100)+0.1));
           printf("%d : %lf\n", i, link[i]->wage);
           link[i]->from = &(neuronPickFirst[j]);
           link[i]->to   = &(neuronPickSecond[k]);
@@ -135,7 +135,7 @@ void connectBias(struct Neuron neuronPickFirst[], struct Neuron neuronPickSecond
   int j = bCount;
 
   while(j < x && k < y){
-    link[i]->wage = (((double)(rand()%100)) / ((double)(rand()%100)));
+    link[i]->wage = (((double)(rand()%100)+0.1) / ((double)(rand()%100)+0.1));
     printf("%d : %lf\n", i, link[i]->wage);
     link[i]->from = &(neuronPickFirst[j]);
     link[i]->to   = &(neuronPickSecond[k]);
@@ -252,8 +252,6 @@ int main(){
     calculateNeuron(link, neuronHidden, 1);
     calculateNeuron(link, neuronOutput, 0);
 
-
-
     //obliczenie błędu wyjścia z sieci
     networkError = vector[num].result - neuronOutput[0].wage;
 
@@ -265,7 +263,10 @@ int main(){
     */
 
     //sprawdzić czy błąd jest mniejszy niż oczekiwany;
-    if(networkError<0.0003 && networkError>0.0) break;
+    if(networkError<0.0003 && networkError>(-0.0003)){
+      printf("Odbyło się %d iteracji.\n", x);
+      break;
+    }
 
     //obliczenie błędu dla warstwy wyjściowej oraz ukrytej
     calculateOutputError(networkError, neuronOutput, 0);
