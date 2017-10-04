@@ -113,7 +113,7 @@ void connectLayers(struct Neuron neuronPickFirst[], struct Neuron neuronPickSeco
   if(bCount == 0){
       for(int j = 0; j < x; j++){
         for(int k = 0; k < y; k++){
-          link[i]->wage = (((double)(rand()%100)+0.1) / ((double)(rand()%100)+0.1));
+          link[i]->wage = (((double)(rand()%100)) / ((double)(rand()%100))+0.5);
           printf("%d : %lf\n", i, link[i]->wage);
           link[i]->from = &(neuronPickFirst[j]);
           link[i]->to   = &(neuronPickSecond[k]);
@@ -135,7 +135,7 @@ void connectBias(struct Neuron neuronPickFirst[], struct Neuron neuronPickSecond
   int j = bCount;
 
   while(j < x && k < y){
-    link[i]->wage = (((double)(rand()%100)+0.1) / ((double)(rand()%100)+0.1));
+    link[i]->wage = (((double)(rand()%100)) / ((double)(rand()%100))+0.5);
     printf("%d : %lf\n", i, link[i]->wage);
     link[i]->from = &(neuronPickFirst[j]);
     link[i]->to   = &(neuronPickSecond[k]);
@@ -215,6 +215,8 @@ int main(){
 
   srand(time(NULL));
 
+//  int x = 0;
+//  while(1){
   for(int x=0; x<(ITERATION * EXAMPLES); x++){    //ilość iteracji razy ilość przykładów uczących
 
     //losowanie przykładu do sieci
@@ -263,7 +265,7 @@ int main(){
     */
 
     //sprawdzić czy błąd jest mniejszy niż oczekiwany;
-    if(networkError<0.0003 && networkError>(-0.0003)){
+    if(networkError<0.0001 && networkError>(-0.0001)){
       printf("Odbyło się %d iteracji.\n", x);
       break;
     }
