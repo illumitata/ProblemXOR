@@ -12,15 +12,15 @@
 #include <math.h>
 #include <time.h>
 
-#define EXAMPLES        4   //liczba przykładów podanych sieci
-#define NUM_INPUT       2   //liczba wejść
-#define NUM_HIDDEN      2   //liczba ukrytych neuronów
-#define NUM_OUTPUT      1   //liczba wyjść z sieci
-#define NUM_BIAS        3   //liczba "biasów"
-#define NUM_LINK        9   //liczba połączeń w sieci
-#define ALPHA         0.1   //współczynnik nauki sieci
-#define BIAS         -1.0   //wartość bias
-#define ITERATION  250000   //ilość iteracji podczas nauki
+#define EXAMPLES         4   //liczba przykładów podanych sieci
+#define NUM_INPUT        2   //liczba wejść
+#define NUM_HIDDEN       2   //liczba ukrytych neuronów
+#define NUM_OUTPUT       1   //liczba wyjść z sieci
+#define NUM_BIAS         3   //liczba "biasów"
+#define NUM_LINK         9   //liczba połączeń w sieci
+#define ALPHA          0.1   //współczynnik nauki sieci
+#define BIAS          -1.0   //wartość bias
+#define ITERATION   500000   //ilość iteracji podczas nauki
 
 struct Vector{          //struktura wektora uczącego
   double first;         //pierwszy składnik
@@ -113,8 +113,8 @@ void connectLayers(struct Neuron neuronPickFirst[], struct Neuron neuronPickSeco
   if(bCount == 0){
       for(int j = 0; j < x; j++){
         for(int k = 0; k < y; k++){
-                    printf("j: %d k: %d\n", j, k);
           link[i]->wage = (((double)(rand()%100)) / ((double)(rand()%100)));
+          printf("%d : %lf\n", i, link[i]->wage);
           link[i]->from = &(neuronPickFirst[j]);
           link[i]->to   = &(neuronPickSecond[k]);
           i++;
@@ -135,8 +135,8 @@ void connectBias(struct Neuron neuronPickFirst[], struct Neuron neuronPickSecond
   int j = bCount;
 
   while(j < x && k < y){
-    printf("j: %d k: %d\n", j, k);
     link[i]->wage = (((double)(rand()%100)) / ((double)(rand()%100)));
+    printf("%d : %lf\n", i, link[i]->wage);
     link[i]->from = &(neuronPickFirst[j]);
     link[i]->to   = &(neuronPickSecond[k]);
     i++;
@@ -189,65 +189,23 @@ int main(){
   int tmpLinkCount = 0;
   int tmpBiasCount = 0;
 
+  //ziarno do losowania
+  srand(time(NULL));
+
   connectLayers(neuronInput, neuronHidden, link, tmpLinkCount, tmpBiasCount, NUM_INPUT, NUM_HIDDEN);
   tmpLinkCount += (NUM_INPUT * NUM_HIDDEN);
-  printf("%d %d \n", tmpLinkCount, tmpBiasCount);
 
   connectLayers(neuronHidden, neuronOutput, link, tmpLinkCount, tmpBiasCount, NUM_HIDDEN, NUM_OUTPUT);
   tmpLinkCount += (NUM_HIDDEN * NUM_OUTPUT);
-    printf("%d %d \n", tmpLinkCount, tmpBiasCount);
 
   connectBias(neuronBias, neuronHidden, link, tmpLinkCount, tmpBiasCount, NUM_BIAS, NUM_HIDDEN);
   tmpLinkCount += NUM_HIDDEN;
   tmpBiasCount += NUM_HIDDEN;
-    printf("%d %d \n", tmpLinkCount, tmpBiasCount);
 
   connectBias(neuronBias, neuronOutput, link, tmpLinkCount, tmpBiasCount, NUM_BIAS, NUM_OUTPUT);
   tmpLinkCount += NUM_OUTPUT;
   tmpBiasCount += NUM_OUTPUT;
-    printf("%d %d \n", tmpLinkCount, tmpBiasCount);
 
-/*  //pierwszy input do ukrytej
-  link[0]->wage = 0.5;
-  link[0]->from = &(neuronInput[0]);
-  link[0]->to   = &(neuronHidden[0]);
-
-  link[1]->wage = 0.9;
-  link[1]->from = &(neuronInput[0]);
-  link[1]->to   = &(neuronHidden[1]);
-
-  //drugi input do ukrytej
-  link[2]->wage = 0.4;
-  link[2]->from = &(neuronInput[1]);
-  link[2]->to   = &(neuronHidden[0]);
-
-  link[3]->wage = 1.0;
-  link[3]->from = &(neuronInput[1]);
-  link[3]->to   = &(neuronHidden[1]);
-
-  //bias do ukrytej
-  link[6]->wage = 0.8;
-  link[6]->from = &(neuronBias[0]);
-  link[6]->to   = &(neuronHidden[0]);
-
-  link[7]->wage = -0.1;
-  link[7]->from = &(neuronBias[1]);
-  link[7]->to   = &(neuronHidden[1]);
-
-  //ukryta do wyjściowej
-  link[4]->wage = -1.2;
-  link[4]->from = &(neuronHidden[0]);
-  link[4]->to   = &(neuronOutput[0]);
-
-  link[5]->wage = 1.1;
-  link[5]->from = &(neuronHidden[1]);
-  link[5]->to   = &(neuronOutput[0]);
-
-  //bias do wyjściowej
-  link[8]->wage = 0.3;
-  link[8]->from = &(neuronBias[2]);
-  link[8]->to   = &(neuronOutput[0]);
-*/
 ///////////Proces Nauki///////////
 
   double networkError = 0.0;
