@@ -113,7 +113,7 @@ short int checkSumSquaredError(double tab[]){
   }
 
   sum = sum / 2;
-  printf("%.30lf\n", sum);
+  //printf("%.30lf\n", sum);
   if(sum < ERA_ERROR) return 0;
   else return 1;
 }
@@ -123,8 +123,8 @@ double betterRandom(){
   double result   = 0.0;
   short int sign  = 0;
 
-  double outsideLimit = 3.0;
-  double insideLimit  = 0.39;
+  double outsideLimit = 4.0;
+  double insideLimit  = 0.59;
 
   while(result==0.0 || (result<(- outsideLimit) || result>outsideLimit) ||\
         (result>(- insideLimit) && result<insideLimit)){
@@ -132,10 +132,10 @@ double betterRandom(){
     sign = (rand()%2);
 
     if(sign==1){              //dodatnie
-      result = (double)(rand()%100) / (rand()%100);
+      result = (double)(rand()%1000) / (rand()%1000);
     }
     else{                     //ujemne
-      result = -1 * (double)(rand()%100) / (rand()%100);
+      result = -1 * (double)(rand()%1000) / (rand()%1000);
     }
   }
 
@@ -255,7 +255,7 @@ int main(){
 
 //  int x = 0;
 //  while(1){
-  for(int x=0; x<(ITERATION * EXAMPLES); x++){    //ilość iteracji razy ilość przykładów uczących
+  for(long int x=0; x<(ITERATION * EXAMPLES); x++){    //ilość iteracji razy ilość przykładów uczących
 
     //losowanie przykładu do sieci
       if((x%EXAMPLES)==0){
