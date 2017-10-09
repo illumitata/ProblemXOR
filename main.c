@@ -21,6 +21,7 @@
 #define ALPHA          0.1   //współczynnik nauki sieci
 #define BIAS          -1.0   //wartość bias
 #define ITERATION   300000   //ilość iteracji podczas nauki
+#define ERA_ERROR    0.001   //oczekiwany, dopuszczalny błąd epoki
 
 struct Vector{          //struktura wektora uczącego
   double first;         //pierwszy składnik
@@ -103,6 +104,20 @@ void backPropagation(struct Link *link[]){
   return;
 }
 
+short int checkSumSquaredError(double tab[]){
+
+  double sum = 0.0;
+
+  for(int i=0; i<EXAMPLES; i++){
+    sum += tab[i] * tab[i];
+  }
+
+  sum = sum / 2;
+  printf("%.30lf\n", sum);
+  if(sum < ERA_ERROR) return 0;
+  else return 1;
+}
+
 double betterRandom(){
 
   double result   = 0.0;
@@ -111,8 +126,9 @@ double betterRandom(){
   double outsideLimit = 3.0;
   double insideLimit  = 0.39;
 
-  while(result==0.0 || (result<(- outsideLimit) || result>outsideLimit) \
-        || (result>(- insideLimit) && result<insideLimit)){
+  while(result==0.0 || (result<(- outsideLimit) || result>outsideLimit) ||\
+        (result>(- insideLimit) && result<insideLimit)){
+
     sign = (rand()%2);
 
     if(sign==1){              //dodatnie
@@ -231,12 +247,11 @@ int main(){
 
 ///////////Proces Nauki///////////
 
+  double networkErrorTab[EXAMPLES];
   double networkError = 0.0;
   int    randomizeTab[EXAMPLES]; //tablica przechowująca wynik losowego wybrania wektoru uczącego
   int    flag = 0;
   int    num  = 0;
-
-  srand(time(NULL));
 
 //  int x = 0;
 //  while(1){
@@ -244,7 +259,10 @@ int main(){
 
     //losowanie przykładu do sieci
       if((x%EXAMPLES)==0){
-        for(int i=0; i<EXAMPLES; i++) randomizeTab[i] = 0;
+        for(int i=0; i<EXAMPLES; i++){
+          randomizeTab[i]    = 0;
+          networkErrorTab[i] = 0.0;
+        }
       }
 
       do{
@@ -279,18 +297,10 @@ int main(){
 
     //obliczenie błędu wyjścia z sieci
     networkError = vector[num].result - neuronOutput[0].wage;
+    networkErrorTab[x%EXAMPLES] = networkError;
 
-    /*
-        //Funkcje pomagające w obserwacji działania sieci
-        printf("-----ITERACJA %d num: %d------NETWORK ERROR: %lf\n", x, num, networkError);
-        printf("A: %lf B: %lf C:%lf\n", neuronInput[0].wage, neuronInput[1].wage, vector[num].result);
-        printf("Output 0: %lf\n", neuronOutput[0].wage);
-    */
-
-    //sprawdzić czy błąd jest mniejszy niż oczekiwany;
-    if(networkError<0.0001 && networkError>(-0.0001)){
-      printf("Odbyło się %d iteracji.\n", x);
-      break;
+    if(x%EXAMPLES%4){
+      if(checkSumSquaredError(networkErrorTab) == 0) break;
     }
 
     //obliczenie błędu dla warstwy wyjściowej oraz ukrytej
