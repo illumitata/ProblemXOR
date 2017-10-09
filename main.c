@@ -103,6 +103,29 @@ void backPropagation(struct Link *link[]){
   return;
 }
 
+double betterRandom(){
+
+  double result   = 0.0;
+  short int sign  = 0;
+
+  double outsideLimit = 3.0;
+  double insideLimit  = 0.39;
+
+  while(result==0.0 || (result<(- outsideLimit) || result>outsideLimit) \
+        || (result>(- insideLimit) && result<insideLimit)){
+    sign = (rand()%2);
+
+    if(sign==1){              //dodatnie
+      result = (double)(rand()%100) / (rand()%100);
+    }
+    else{                     //ujemne
+      result = -1 * (double)(rand()%100) / (rand()%100);
+    }
+  }
+
+  return result;
+}
+
 void connectLayers(struct Neuron neuronPickFirst[], struct Neuron neuronPickSecond[], \
                    struct Link *link[], int lCount, int bCount, \
                    int x, int y){
@@ -113,7 +136,7 @@ void connectLayers(struct Neuron neuronPickFirst[], struct Neuron neuronPickSeco
   if(bCount == 0){
       for(int j = 0; j < x; j++){
         for(int k = 0; k < y; k++){
-          link[i]->wage = (((double)(rand()%100)) / ((double)(rand()%100))+0.5);
+          link[i]->wage = betterRandom();
           printf("%d : %lf\n", i, link[i]->wage);
           link[i]->from = &(neuronPickFirst[j]);
           link[i]->to   = &(neuronPickSecond[k]);
@@ -135,7 +158,7 @@ void connectBias(struct Neuron neuronPickFirst[], struct Neuron neuronPickSecond
   int j = bCount;
 
   while(j < x && k < y){
-    link[i]->wage = (((double)(rand()%100)) / ((double)(rand()%100))+0.5);
+    link[i]->wage = betterRandom();
     printf("%d : %lf\n", i, link[i]->wage);
     link[i]->from = &(neuronPickFirst[j]);
     link[i]->to   = &(neuronPickSecond[k]);
@@ -190,7 +213,7 @@ int main(){
   int tmpBiasCount = 0;
 
   //ziarno do losowania
-  srand(time(NULL));
+  srand(time(0));
 
   connectLayers(neuronInput, neuronHidden, link, tmpLinkCount, tmpBiasCount, NUM_INPUT, NUM_HIDDEN);
   tmpLinkCount += (NUM_INPUT * NUM_HIDDEN);
